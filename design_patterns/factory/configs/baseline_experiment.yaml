@@ -1,0 +1,23 @@
+# Experiment: Quick baseline comparison
+# Runs all models with default settings to establish baselines
+
+experiments:
+  - algorithm: logistic_regression
+
+  - algorithm: random_forest
+    hyperparameters:
+      n_estimators: 50
+
+  - algorithm: gradient_boosting
+    hyperparameters:
+      n_estimators: 50
+
+  - algorithm: xgboost
+    hyperparameters:
+      n_estimators: 50
+      max_depth: 4
+
+  - algorithm: lightgbm
+    hyperparameters:
+      n_estimators: 50
+      num_leaves: 15

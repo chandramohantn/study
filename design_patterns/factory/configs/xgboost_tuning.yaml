@@ -1,0 +1,28 @@
+# Experiment: XGBoost hyperparameter tuning
+# Compare different XGBoost configurations to find the best one
+
+experiments:
+  - algorithm: xgboost
+    hyperparameters:
+      n_estimators: 100
+      max_depth: 4
+      learning_rate: 0.1
+
+  - algorithm: xgboost
+    hyperparameters:
+      n_estimators: 200
+      max_depth: 6
+      learning_rate: 0.05
+
+  - algorithm: xgboost
+    hyperparameters:
+      n_estimators: 300
+      max_depth: 8
+      learning_rate: 0.03
+
+  - algorithm: xgboost
+    hyperparameters:
+      n_estimators: 500
+      max_depth: 4
+      learning_rate: 0.01
+      
