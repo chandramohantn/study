@@ -750,3 +750,747 @@ There are two ways to proceed:
 
 Given your interest in understanding systems deeply rather than just learning metrics, I recommend the **second approach**. Once you understand the architecture of an evaluation system, RAG evals, agent evals, and tool evals become special cases rather than separate subjects.
 
+
+I think this is the right direction. In fact, if you understand this architecture well, you'll be able to understand almost every evaluation framework (DeepEval, Ragas, LangSmith, MLflow, Promptfoo, OpenAI Evals, etc.) because **they all implement roughly the same conceptual architecture**.
+
+This is also where AI evaluation starts looking remarkably similar to **software testing**, except the outputs are probabilistic instead of deterministic.
+
+---
+
+# Module 1: The Architecture of an AI Evaluation System
+
+Let's forget about RAG, agents, and copilots for a moment.
+
+Suppose you're building an evaluation platform inside OpenAI.
+
+Your manager asks:
+
+> **Build an evaluation system that can test any AI application.**
+
+Where do you start?
+
+Most people answer:
+
+> "We need some test questions."
+
+That's actually the wrong starting point.
+
+The first question is much deeper.
+
+---
+
+# What is an Evaluation?
+
+Think about unit testing.
+
+A unit test looks like this:
+
+```python
+def test_add():
+    assert add(2,3) == 5
+```
+
+There are four things happening here.
+
+```
+Input
+
+↓
+
+System Under Test
+
+↓
+
+Expected Behavior
+
+↓
+
+Comparison
+```
+
+Every software test follows this pattern.
+
+---
+
+Now let's translate this into AI.
+
+Suppose your chatbot answers questions.
+
+```
+Question
+
+↓
+
+AI Application
+
+↓
+
+Generated Answer
+
+↓
+
+Evaluation
+```
+
+Notice something.
+
+Unlike software,
+
+there is often **no single correct answer**.
+
+That changes everything.
+
+---
+
+# The First Big Difference
+
+Software testing:
+
+```
+2 + 3
+
+↓
+
+5
+
+↓
+
+Exact Match
+```
+
+Easy.
+
+---
+
+GenAI:
+
+```
+Summarize this document.
+```
+
+Possible outputs:
+
+```
+Version A
+
+Version B
+
+Version C
+
+Version D
+```
+
+All four may be perfectly acceptable.
+
+Therefore,
+
+AI evaluation **cannot rely on exact matching** in most cases.
+
+---
+
+# The Core Architecture
+
+Every mature AI evaluation platform eventually converges to something like this.
+
+```text
+                    Evaluation Platform
+
+                           │
+
+    ┌──────────────────────┼──────────────────────┐
+
+    │                      │                      │
+
+Evaluation Dataset    Application Runner     Evaluators
+
+    │                      │                      │
+
+Ground Truth         Candidate Output      Scoring Logic
+
+    │                      │                      │
+
+    └──────────────────────┼──────────────────────┘
+
+                     Results Database
+
+                           │
+
+                   Dashboards & Reports
+
+                           │
+
+                  Regression Detection
+```
+
+This architecture is surprisingly universal.
+
+Let's examine each piece.
+
+---
+
+# Component 1 — Evaluation Dataset
+
+Everything begins with a dataset.
+
+Notice I did **not** say
+
+> Test questions.
+
+Because datasets can contain much more.
+
+An evaluation example might look like:
+
+```yaml
+id: 182
+
+input:
+   What is the refund policy?
+
+metadata:
+   language: English
+   customer_type: Premium
+
+expected_behavior:
+   Mention 30-day refund.
+   Mention receipt requirement.
+
+reference_answer:
+   ...
+
+evaluation_type:
+   llm_judge
+```
+
+This is much richer than
+
+```
+Question
+
+↓
+
+Answer
+```
+
+---
+
+## Think of Evaluation Cases
+
+Instead of questions,
+
+think in terms of
+
+**evaluation cases**.
+
+An evaluation case defines
+
+* input
+* context
+* expectations
+* scoring strategy
+
+Not every case even has a reference answer.
+
+---
+
+# Component 2 — The Application Runner
+
+This is surprisingly simple.
+
+Its only job is
+
+```
+Evaluation Case
+
+↓
+
+Run Application
+
+↓
+
+Capture Output
+```
+
+The application runner should behave exactly like production.
+
+That means
+
+* same prompts
+* same tools
+* same retrieval
+* same model
+* same middleware
+
+Otherwise,
+
+you're not evaluating what users actually experience.
+
+---
+
+# Component 3 — Evaluators
+
+This is where AI evaluation becomes interesting.
+
+Unlike software,
+
+we need different evaluation strategies.
+
+Imagine three questions.
+
+---
+
+Question 1
+
+```
+2+2
+```
+
+Evaluation:
+
+```
+Exact Match
+```
+
+---
+
+Question 2
+
+```
+Write an apology email.
+```
+
+Evaluation:
+
+```
+LLM Judge
+```
+
+---
+
+Question 3
+
+```
+Generate SQL.
+```
+
+Evaluation:
+
+```
+Execute SQL
+```
+
+Different tasks require different evaluators.
+
+---
+
+# The Evaluator Pattern
+
+A useful abstraction is:
+
+```
+Input
+
++
+
+Output
+
++
+
+Metadata
+
+↓
+
+Evaluator
+
+↓
+
+Score
+```
+
+Notice something.
+
+The evaluator doesn't care
+
+whether the application is
+
+* RAG
+* Agent
+* Chatbot
+* Copilot
+
+It only receives
+
+```
+Input
+
+↓
+
+Output
+
+↓
+
+Score
+```
+
+This abstraction makes evaluation systems reusable.
+
+---
+
+# Component 4 — Score Aggregation
+
+One response rarely has one score.
+
+Imagine evaluating
+
+```
+Summarize document.
+```
+
+Possible dimensions:
+
+```
+Correctness
+
+Completeness
+
+Groundedness
+
+Conciseness
+
+Tone
+
+Formatting
+```
+
+Each becomes an independent evaluator.
+
+```
+             Response
+
+                  │
+
+     ┌────────────┼────────────┐
+
+     ▼            ▼            ▼
+
+Correctness   Groundedness   Style
+
+     ▼            ▼            ▼
+
+   0.91         0.97         0.83
+```
+
+Now we have a **score vector**, not a single score.
+
+This is analogous to a medical check-up where blood pressure, cholesterol, heart rate, and glucose are all measured separately rather than collapsed into one number.
+
+---
+
+# Component 5 — Storage
+
+Every evaluation result is stored.
+
+Imagine
+
+```
+Prompt Version 14
+
+↓
+
+Run 12,000 evaluations
+
+↓
+
+Store Results
+```
+
+Later
+
+```
+Prompt Version 15
+
+↓
+
+Run Same Dataset
+
+↓
+
+Compare
+```
+
+Without historical storage,
+
+regression testing becomes impossible.
+
+---
+
+# Component 6 — Reporting
+
+Now we ask questions like
+
+```
+Overall Accuracy?
+
+↓
+
+Which capability regressed?
+
+↓
+
+Which prompt caused it?
+
+↓
+
+Which customer segment failed?
+
+↓
+
+Which evaluator changed?
+```
+
+Dashboards emerge naturally.
+
+```
+Correctness
+
+█████████
+
+92%
+
+Groundedness
+
+██████████
+
+97%
+
+Latency
+
+██████
+
+3.1 seconds
+```
+
+---
+
+# The Evaluation Lifecycle
+
+Putting everything together:
+
+```text
+Evaluation Dataset
+
+↓
+
+Application Runner
+
+↓
+
+Generated Outputs
+
+↓
+
+Evaluators
+
+↓
+
+Scores
+
+↓
+
+Database
+
+↓
+
+Dashboards
+
+↓
+
+Regression Detection
+
+↓
+
+Engineers Improve Application
+
+↓
+
+Run Again
+```
+
+This loop mirrors continuous integration in software engineering.
+
+---
+
+# The Most Important Design Principle
+
+Here's the biggest conceptual takeaway.
+
+**Separate execution from evaluation.**
+
+Many newcomers design systems like this:
+
+```text
+Question
+
+↓
+
+Application
+
+↓
+
+Score Immediately
+```
+
+This tightly couples generation and evaluation.
+
+Instead, mature systems do this:
+
+```text
+Question
+
+↓
+
+Application
+
+↓
+
+Raw Output
+
+↓
+
+Persist Everything
+
+↓
+
+Evaluate Later
+
+↓
+
+Store Scores
+```
+
+Why?
+
+Because evaluation methods evolve.
+
+Today you may score only correctness.
+
+Tomorrow you may add
+
+* hallucination detection
+* toxicity
+* citation quality
+
+If you've stored the raw outputs, you can re-evaluate historical runs without rerunning the application.
+
+This is exactly the same reason observability systems store logs instead of only aggregate metrics.
+
+---
+
+# Evaluation Is a Pipeline
+
+One of the biggest misconceptions is that evaluation is a single function.
+
+It is better thought of as a pipeline.
+
+```text
+Evaluation Dataset
+        │
+        ▼
+Application Execution
+        │
+        ▼
+Trace Collection
+        │
+        ▼
+Evaluation
+        │
+        ▼
+Aggregation
+        │
+        ▼
+Regression Analysis
+        │
+        ▼
+Reporting
+```
+
+This architecture is remarkably similar to an ML training pipeline:
+
+```text
+Training Data
+        │
+        ▼
+Training
+        │
+        ▼
+Validation
+        │
+        ▼
+Metrics
+        │
+        ▼
+Model Registry
+```
+
+The difference is that the "model" being evaluated is now an **entire application**.
+
+---
+
+# Why Every Framework Looks Similar
+
+Let's connect this to real frameworks.
+
+| Component          | DeepEval | Ragas   | LangSmith | MLflow | Promptfoo |
+| ------------------ | -------- | ------- | --------- | ------ | --------- |
+| Evaluation dataset | ✓        | ✓       | ✓         | ✓      | ✓         |
+| Run application    | ✓        | ✓       | ✓         | ✓      | ✓         |
+| LLM judge          | ✓        | ✓       | ✓         | ✓      | ✓         |
+| Custom evaluators  | ✓        | ✓       | ✓         | ✓      | ✓         |
+| Regression testing | ✓        | Partial | ✓         | ✓      | ✓         |
+| Dashboards         | Partial  | Partial | ✓         | ✓      | Partial   |
+
+Although their APIs differ, they all implement essentially the same architectural pattern we've just discussed.
+
+---
+
+# Before We Continue
+
+Everything above describes the **skeleton** of an evaluation platform.
+
+Now we need to understand the **organs** inside that skeleton.
+
+There are six major building blocks that every serious evaluation system needs:
+
+```
+                    Evaluation Platform
+
+                          │
+
+      ┌───────────────────┼───────────────────┐
+
+      │                   │                   │
+
+ Evaluation Dataset   Evaluators         Regression Suite
+
+      │                   │                   │
+
+  LLM Judges          Rubrics          CI/CD Integration
+
+      │                   │                   │
+
+      └───────────────────┼───────────────────┘
+
+                  Production Monitoring
+```
+
+We'll study each in depth.
+
+## The order I recommend
+
+1. **Evaluation datasets** (how to create high-quality evaluation cases)
+2. **Rubrics** (what exactly are we measuring?)
+3. **LLM-as-a-Judge** (how modern systems score subjective outputs)
+4. **Regression suites** (preventing prompt/model regressions)
+5. **CI/CD integration** (how evaluations become deployment gates)
+6. **Production monitoring** (closing the feedback loop with real users)
+
+This sequence mirrors how many organizations mature their GenAI evaluation practice—from building a static benchmark to operating a continuously improving evaluation platform. I consider the next topic, **evaluation dataset design**, to be the foundation for everything else. A weak dataset cannot be rescued by a sophisticated judge or a polished dashboard.
