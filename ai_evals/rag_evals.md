@@ -983,3 +983,932 @@ Instead, I'd spend the next modules on the **hard problems** behind RAG evaluati
 5. **How would you architect an enterprise-grade evaluation platform that continuously evaluates every RAG application?**
 
 Those topics move from *using* RAG evaluation frameworks to *understanding how to build one*, which I think aligns well with the way you prefer to learn complex systems.
+
+
+Perfect. This is the point where we stop talking about *metrics* and start talking about *measurement science*.
+
+Most blogs say:
+
+> "Compute Faithfulness."
+
+or
+
+> "Compute Context Precision."
+
+Very few explain **where these numbers actually come from.**
+
+As an engineer, that should bother you.
+
+If I tell you:
+
+```
+Faithfulness = 0.87
+```
+
+You should immediately ask:
+
+> **How did you compute 0.87?**
+
+Let's answer that question.
+
+---
+
+# Module 2: Designing a RAG Evaluation Dataset
+
+I will make a strong statement.
+
+> **A RAG evaluation system is only as good as its evaluation dataset.**
+
+The LLM judge.
+
+The metrics.
+
+The dashboards.
+
+The fancy UI.
+
+All of them are downstream.
+
+The evaluation dataset is the foundation.
+
+---
+
+# First Principle
+
+Let's forget about RAG.
+
+Suppose you're testing Gmail.
+
+What do you need?
+
+Test cases.
+
+Example:
+
+```
+Compose email
+
+↓
+
+Send email
+
+↓
+
+Verify recipient received it
+```
+
+Software engineers have been doing this for decades.
+
+Now replace Gmail with a RAG system.
+
+Same idea.
+
+We need evaluation cases.
+
+---
+
+# What Is an Evaluation Case?
+
+Most beginners think an evaluation case is
+
+```yaml
+question:
+answer:
+```
+
+That is far too simplistic.
+
+A production evaluation case is much richer.
+
+Conceptually:
+
+```text
+                   Evaluation Case
+
+          ┌────────────────────────────┐
+
+          │ User Query                 │
+
+          │ User Intent                │
+
+          │ Expected Evidence          │
+
+          │ Reference Answer           │
+
+          │ Evaluation Strategy        │
+
+          │ Metadata                   │
+
+          └────────────────────────────┘
+```
+
+Every field has a purpose.
+
+---
+
+# Let's Build One
+
+Suppose your RAG system answers HR questions.
+
+Question:
+
+```
+How many vacation days do new employees receive?
+```
+
+A mature evaluation case might look like
+
+```yaml
+id: HR-001
+
+query:
+  How many vacation days do new employees receive?
+
+intent:
+  Vacation policy
+
+expected_documents:
+
+- employee_handbook.pdf
+- hr_policy_v4.pdf
+
+expected_chunks:
+
+- handbook_chunk_18
+- policy_chunk_4
+
+reference_answer:
+
+  New employees receive 20 vacation
+  days per year.
+
+evaluation_dimensions:
+
+- retrieval
+- faithfulness
+- completeness
+
+difficulty:
+
+  easy
+
+language:
+
+  english
+
+customer_segment:
+
+  internal_hr
+```
+
+Notice something.
+
+The answer is only one field.
+
+---
+
+# Why So Much Metadata?
+
+Imagine one evaluation fails.
+
+Question:
+
+```
+How do contractors request VPN access?
+```
+
+The answer is wrong.
+
+Now you ask:
+
+Why?
+
+Metadata helps answer that.
+
+Maybe
+
+```
+Department = IT
+```
+
+or
+
+```
+Language = German
+```
+
+or
+
+```
+Document Version = 2026
+```
+
+Metadata allows slicing evaluation results later.
+
+---
+
+# What Should Be Stored?
+
+I generally divide an evaluation case into six sections.
+
+```
+Evaluation Case
+
+↓
+
+Input
+
+↓
+
+Ground Truth
+
+↓
+
+Expected Retrieval
+
+↓
+
+Expected Behavior
+
+↓
+
+Metadata
+
+↓
+
+Scoring Strategy
+```
+
+Let's study each.
+
+---
+
+# Section 1 — Input
+
+This is obvious.
+
+```
+User Query
+```
+
+But...
+
+Should you only have one query?
+
+No.
+
+Suppose users ask
+
+```
+Vacation policy
+```
+
+Some users ask
+
+```
+PTO
+```
+
+Others ask
+
+```
+Leave balance
+```
+
+Others ask
+
+```
+Paid holidays
+```
+
+Same intent.
+
+Different wording.
+
+A robust dataset captures this linguistic variation.
+
+---
+
+# Section 2 — Ground Truth
+
+This is where many people struggle.
+
+Should we always store
+
+```
+Reference Answer?
+```
+
+Sometimes yes.
+
+Sometimes no.
+
+There are three possibilities.
+
+---
+
+## Option A
+
+Reference Answer
+
+Example
+
+```
+Warranty = 30 days
+```
+
+Easy.
+
+---
+
+## Option B
+
+Reference Documents
+
+Instead of
+
+correct answer
+
+store
+
+```
+Correct Evidence
+```
+
+This is common in RAG.
+
+Because the answer can be generated in many ways.
+
+---
+
+## Option C
+
+Expected Behavior
+
+Sometimes
+
+there is no correct answer.
+
+Instead
+
+```
+Should refuse.
+
+Should ask follow-up question.
+
+Should say insufficient information.
+
+Should escalate.
+```
+
+Notice
+
+Behavior
+
+is the ground truth.
+
+Not text.
+
+---
+
+# Section 3 — Expected Retrieval
+
+This is unique to RAG.
+
+Imagine
+
+Question
+
+↓
+
+Retriever
+
+↓
+
+Top K
+
+We need to know
+
+What SHOULD have been retrieved?
+
+Example
+
+```
+Expected Documents
+
+Policy_v4.pdf
+
+Vacation.pdf
+
+Benefits.pdf
+```
+
+Now retrieval becomes measurable.
+
+Without this,
+
+Recall
+
+cannot be computed.
+
+---
+
+# But Wait...
+
+How do we know
+
+Expected Documents?
+
+Excellent question.
+
+This is actually one of the hardest problems in RAG evaluation.
+
+There are several approaches.
+
+---
+
+# Method 1 — Human Annotation
+
+Experts manually identify
+
+correct documents.
+
+```
+Engineer
+
+↓
+
+Reads Query
+
+↓
+
+Reads Corpus
+
+↓
+
+Marks Relevant Chunks
+```
+
+Highest quality.
+
+Most expensive.
+
+---
+
+# Method 2 — Existing Citations
+
+Suppose documentation already references
+
+```
+Section 4.2
+```
+
+Automatically
+
+ground truth exists.
+
+---
+
+# Method 3 — LLM Assisted
+
+An LLM proposes
+
+candidate chunks.
+
+Human verifies.
+
+This greatly reduces annotation effort.
+
+---
+
+# Method 4 — Production Logs
+
+Suppose users consistently click
+
+Document 12
+
+after asking
+
+```
+VPN setup
+```
+
+Production interactions become weak supervision signals.
+
+---
+
+# Section 4 — Expected Behavior
+
+Suppose the query is
+
+```
+How do I change payroll information?
+```
+
+Maybe
+
+Correct behavior is
+
+```
+Answer directly.
+```
+
+Another query
+
+```
+My password doesn't work.
+```
+
+Expected behavior
+
+```
+Route to IT.
+```
+
+Another query
+
+```
+How do I hack payroll?
+```
+
+Expected behavior
+
+```
+Refuse.
+```
+
+Behavior
+
+is sometimes more important than answer correctness.
+
+---
+
+# Section 5 — Metadata
+
+This becomes surprisingly useful.
+
+Possible metadata.
+
+```
+Difficulty
+
+Department
+
+Language
+
+User Type
+
+Topic
+
+Intent
+
+Date
+
+Document Version
+
+Retriever Version
+
+Prompt Version
+
+Embedding Model
+```
+
+Later
+
+you discover
+
+```
+German questions
+
+↓
+
+20% worse.
+```
+
+Without metadata
+
+you never find this.
+
+---
+
+# Section 6 — Evaluation Strategy
+
+This is rarely discussed.
+
+Different cases require different evaluators.
+
+Example
+
+Case A
+
+```
+Exact Match
+```
+
+Case B
+
+```
+LLM Judge
+```
+
+Case C
+
+```
+SQL Execution
+```
+
+Case D
+
+```
+Faithfulness Only
+```
+
+The dataset itself specifies
+
+how it should be evaluated.
+
+---
+
+# Dataset Taxonomy
+
+One thing that distinguishes mature evaluation teams is that they don't treat all queries equally.
+
+Instead, they classify them.
+
+For a technical documentation assistant, you might have:
+
+```text
+Knowledge Lookup
+        │
+Procedure Questions
+        │
+Configuration Questions
+        │
+Troubleshooting
+        │
+Comparison Questions
+        │
+Summarization
+        │
+Multi-document Reasoning
+        │
+Out-of-scope Questions
+        │
+Adversarial Questions
+```
+
+Each category stresses a different part of the pipeline.
+
+---
+
+# Difficulty Levels
+
+A mature dataset also contains different difficulty levels.
+
+```
+Easy
+
+↓
+
+Single document.
+
+↓
+
+Direct answer.
+
+---------------------
+
+Medium
+
+↓
+
+Multiple chunks.
+
+↓
+
+Some reasoning.
+
+---------------------
+
+Hard
+
+↓
+
+Multiple documents.
+
+↓
+
+Conflict resolution.
+
+↓
+
+Long reasoning.
+```
+
+If all your evaluation cases are easy, your system may look excellent while failing on realistic enterprise queries.
+
+---
+
+# Building the Dataset
+
+Most teams don't start with 10,000 examples.
+
+They grow organically.
+
+```
+Initial Seed Set
+        │
+        ▼
+Human-written Cases
+        │
+        ▼
+Deploy
+        │
+        ▼
+Production Failures
+        │
+        ▼
+Convert Failures into Eval Cases
+        │
+        ▼
+Regression Suite Grows
+```
+
+This is exactly the same philosophy used in software testing.
+
+Every production bug becomes a future regression test.
+
+---
+
+# Gold, Silver, and Bronze Datasets
+
+Frontier teams often think in terms of data quality tiers.
+
+### Gold
+
+* Human curated.
+* Human verified.
+* High confidence.
+* Used for release decisions.
+
+Typically only hundreds of cases.
+
+---
+
+### Silver
+
+* LLM generated.
+* Human reviewed.
+* Mostly correct.
+
+Often thousands of cases.
+
+---
+
+### Bronze
+
+* Automatically mined from production.
+* Weak labels.
+* Large scale.
+
+Used for monitoring rather than release gating.
+
+---
+
+# The Dataset Is a Living Artifact
+
+A common mistake is to think:
+
+> "We built an evaluation dataset."
+
+Finished.
+
+No.
+
+A mature evaluation dataset behaves like source code.
+
+```
+Version 1
+      │
+Production failures
+      │
+Version 2
+      │
+New product features
+      │
+Version 3
+      │
+New document corpus
+      │
+Version 4
+```
+
+It has versioning, reviews, ownership, and change history.
+
+---
+
+# An Enterprise RAG Evaluation Repository
+
+If I were building an evaluation platform, I would not store just CSV files.
+
+I'd organize it more like this:
+
+```text
+rag-evals/
+│
+├── datasets/
+│   ├── gold/
+│   ├── silver/
+│   ├── bronze/
+│   └── archived/
+│
+├── cases/
+│   ├── hr/
+│   ├── finance/
+│   ├── engineering/
+│   ├── legal/
+│   └── support/
+│
+├── rubrics/
+│   ├── faithfulness.yaml
+│   ├── completeness.yaml
+│   └── correctness.yaml
+│
+├── judges/
+│   ├── llm_judge.py
+│   ├── retrieval_judge.py
+│   └── execution_judge.py
+│
+└── reports/
+```
+
+Notice that the **dataset** is treated as a first-class software artifact, not just a file.
+
+---
+
+# The Biggest Insight of This Module
+
+I want to leave you with one important realization.
+
+When most engineers think about RAG evaluation, they think:
+
+```
+Question
+
+↓
+
+Answer
+
+↓
+
+Score
+```
+
+But an evaluation engineer thinks:
+
+```
+Question
+
+↓
+
+Expected Retrieval
+
+↓
+
+Expected Context
+
+↓
+
+Expected Behavior
+
+↓
+
+Expected Answer
+
+↓
+
+Evaluation Strategy
+
+↓
+
+Metadata
+
+↓
+
+Score
+```
+
+The evaluation case becomes a **specification** of how the system should behave, not merely a question with an answer.
+
+---
+
+## Where We Should Go Next
+
+We have now built the foundation: the evaluation dataset.
+
+The next logical question is the one every engineer eventually asks:
+
+> **"I understand what faithfulness means conceptually, but how do frameworks like Ragas or DeepEval actually compute it?"**
+
+That is where we'll dive into **LLM-as-a-Judge**, rubrics, prompt design for judges, pairwise evaluation, structured scoring, calibration, agreement with human raters, and how metrics like **Faithfulness**, **Answer Relevance**, **Context Precision**, and **Context Recall** are implemented internally. Understanding that machinery will demystify almost every modern RAG evaluation framework.
+
