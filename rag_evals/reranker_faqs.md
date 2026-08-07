@@ -6,134 +6,146 @@ This document provides a comprehensive deep dive into rerankers within Retrieval
 
 ## Table of Contents
 
-### [Module 1: Retrieval vs Reranking Fundamentals](#module-1-retrieval-vs-reranking-fundamentals)
-- Q1: Why is retrieval alone insufficient for RAG?
-- Q2: Why can't we simply retrieve Top-5 instead of retrieving Top-100 and reranking?
-- Q3: What kinds of retrieval mistakes can rerankers actually correct?
-- Q4: What mistakes can rerankers NEVER correct?
-- Q5: Why is reranking considered precision optimization while retrieval is recall optimization?
-- Q6: How do retrieval quality and reranking quality interact?
-- Q7: Can an excellent reranker compensate for a poor retriever?
-- Q8: How much recall must a retriever achieve before reranking becomes useful?
 
-### [Module 2: Ranking as a Learning Problem](#module-2-ranking-as-a-learning-problem)
-- Q1: What exactly is a ranking problem?
-- Q2: Why isn't ranking just another classification problem?
-- Q3: What is the difference between relevance estimation and ranking?
-- Q4: Why do pointwise models often underperform pairwise models?
-- Q5: Why do pairwise models often underperform listwise models?
-- Q6: What does it actually mean to optimize an ordering?
-- Q7: Why is ranking a structured prediction problem?
-- Q8: Why do ranking models predict scores instead of explicit ranks?
+**[Module 1: Retrieval vs Reranking Fundamentals](#module-1-retrieval-vs-reranking-fundamentals)**
+- [Q1: Why is retrieval alone insufficient for RAG?](#q1-why-is-retrieval-alone-insufficient-for-rag)
+- [Q2: Why can't we simply retrieve Top-5 instead of retrieving Top-100 and reranking?](#q2-why-cant-we-simply-retrieve-top-5-instead-of-retrieving-top-100-and-reranking)
+- [Q3: What kinds of retrieval mistakes can rerankers actually correct?](#q3-what-kinds-of-retrieval-mistakes-can-rerankers-actually-correct)
+- [Q4: What mistakes can rerankers NEVER correct?](#q4-what-mistakes-can-rerankers-never-correct)
+- [Q5: Why is reranking considered precision optimization while retrieval is recall optimization?](#q5-why-is-reranking-considered-precision-optimization-while-retrieval-is-recall-optimization)
+- [Q6: How do retrieval quality and reranking quality interact?](#q6-how-do-retrieval-quality-and-reranking-quality-interact)
+- [Q7: Can an excellent reranker compensate for a poor retriever?](#q7-can-an-excellent-reranker-compensate-for-a-poor-retriever)
+- [Q8: How much recall must a retriever achieve before reranking becomes useful?](#q8-how-much-recall-must-a-retriever-achieve-before-reranking-becomes-useful)
 
-### [Module 3: Cross Encoder Deep Dive](#module-3-cross-encoder-deep-dive)
-- Q1: Why do Cross Encoders outperform embedding similarity?
-- Q2: Why are Cross Encoders so computationally expensive?
-- Q3: Why can't Cross Encoders precompute document embeddings?
-- Q4: Why do Cross Encoders require one forward pass per query-document pair?
-- Q5: Why does self-attention between query and document improve relevance?
-- Q6: Which transformer output should be used for ranking?
-- Q7: Should a Cross Encoder predict a probability or a continuous score?
-- Q8: How does sequence length affect Cross Encoder performance?
 
-### [Module 4: Late Interaction Deep Dive](#module-4-late-interaction-deep-dive)
-- Q1: Why do single-vector embeddings lose information?
-- Q2: How much semantic information is lost by pooling?
-- Q3: Why does ColBERT store every token embedding?
-- Q4: Why is the interaction called "late"?
-- Q5: Why is MaxSim effective?
-- Q6: Why does MaxSim work despite comparing tokens individually?
-- Q7: Why are contextual token embeddings sufficient?
-- Q8: Can MaxSim be replaced with other aggregation functions?
-- Q9: How much storage overhead does Late Interaction introduce?
-- Q10: What compression techniques are used?
-- Q11: How does ColBERTv2 reduce storage?
+**[Module 2: Ranking as a Learning Problem](#module-2-ranking-as-a-learning-problem)**
+- [Q1: What exactly is a ranking problem?](#q1-what-exactly-is-a-ranking-problem)
+- [Q2: Why isn't ranking just another classification problem?](#q2-why-isnt-ranking-just-another-classification-problem)
+- [Q3: What is the difference between relevance estimation and ranking?](#q3-what-is-the-difference-between-relevance-estimation-and-ranking)
+- [Q4: Why do pointwise models often underperform pairwise models?](#q4-why-do-pointwise-models-often-underperform-pairwise-models)
+- [Q5: Why do pairwise models often underperform listwise models?](#q5-why-do-pairwise-models-often-underperform-listwise-models)
+- [Q6: What does it actually mean to optimize an ordering?](#q6-what-does-it-actually-mean-to-optimize-an-ordering)
+- [Q7: Why is ranking a structured prediction problem?](#q7-why-is-ranking-a-structured-prediction-problem)
+- [Q8: Why do ranking models predict scores instead of explicit ranks?](#q8-why-do-ranking-models-predict-scores-instead-of-explicit-ranks)
 
-### [Module 5: Training Data](#module-5-training-data)
-- Q1: What is a Positive Sample?
-- Q2: What is a Negative Sample?
-- Q3: What is a Hard Negative?
-- Q4: What is a False Negative?
-- Q5: How do false negatives harm reranker training?
-- Q6: How should positives and negatives be balanced?
-- Q7: How many negatives should each query have?
-- Q8: Should negatives be sampled randomly or mined?
-- Q9: How do you continuously refresh training data?
-- Q10: How do click logs become ranking labels?
-- Q11: How do you remove position bias from click data?
 
-### [Module 6: Loss Functions](#module-6-loss-functions)
-- Q1: Why does Binary Cross Entropy optimize classification instead of ranking?
-- Q2: Why is Margin Ranking Loss effective?
-- Q3: Why does RankNet use a probabilistic loss?
-- Q4: Why does LambdaRank optimize NDCG indirectly?
-- Q5: Why is NDCG difficult to optimize directly?
-- Q6: Why are gradients modified in LambdaRank?
-- Q7: When should you use Pointwise, Pairwise, or Listwise?
-- Q8: How do different losses affect convergence?
-- Q9: Which losses are more robust to noisy labels?
+**[Module 3: Cross Encoder Deep Dive](#module-3-cross-encoder-deep-dive)**
+- [Q1: Why do Cross Encoders outperform embedding similarity?](#q1-why-do-cross-encoders-outperform-embedding-similarity)
+- [Q2: Why are Cross Encoders so computationally expensive?](#q2-why-are-cross-encoders-so-computationally-expensive)
+- [Q3: Why can't Cross Encoders precompute document embeddings?](#q3-why-cant-cross-encoders-precompute-document-embeddings)
+- [Q4: Why do Cross Encoders require one forward pass per query-document pair?](#q4-why-do-cross-encoders-require-one-forward-pass-per-query-document-pair)
+- [Q5: Why does self-attention between query and document improve relevance?](#q5-why-does-self-attention-between-query-and-document-improve-relevance)
+- [Q6: Which transformer output should be used for ranking?](#q6-which-transformer-output-should-be-used-for-ranking)
+- [Q7: Should a Cross Encoder predict a probability or a continuous score?](#q7-should-a-cross-encoder-predict-a-probability-or-a-continuous-score)
+- [Q8: How does sequence length affect Cross Encoder performance?](#q8-how-does-sequence-length-affect-cross-encoder-performance)
 
-### [Module 7: Hard Negative Mining](#module-7-hard-negative-mining)
-- Q1: What makes a negative "hard"?
-- Q2: Can a negative be too hard?
-- Q3: What are adversarial negatives?
-- Q4: How do iterative hard-negative mining pipelines work?
-- Q5: Should retrievers and rerankers share the same hard negatives?
-- Q6: Should hard negatives be refreshed every training epoch?
-- Q7: How many hard negatives should each positive have?
-- Q8: How do you avoid accidentally selecting false negatives?
 
-### [Module 8: Domain Adaptation](#module-8-domain-adaptation)
-- Q1: When is a generic reranker sufficient?
-- Q2: When should a reranker be fine-tuned?
-- Q3: How much domain-specific data is needed?
-- Q4: Can instruction tuning improve reranking?
-- Q5: Should telecom terminology be added through continued pretraining or supervised fine-tuning?
-- Q6: How does vocabulary mismatch affect ranking?
-- Q7: How do you evaluate whether domain adaptation was worthwhile?
+**[Module 4: Late Interaction Deep Dive](#module-4-late-interaction-deep-dive)**
+- [Q1: Why do single-vector embeddings lose information?](#q1-why-do-single-vector-embeddings-lose-information)
+- [Q2: How much semantic information is lost by pooling?](#q2-how-much-semantic-information-is-lost-by-pooling)
+- [Q3: Why does ColBERT store every token embedding?](#q3-why-does-colbert-store-every-token-embedding)
+- [Q4: Why is the interaction called "late"?](#q4-why-is-the-interaction-called-late)
+- [Q5: Why is MaxSim effective?](#q5-why-is-maxsim-effective)
+- [Q6: Why does MaxSim work despite comparing tokens individually?](#q6-why-does-maxsim-work-despite-comparing-tokens-individually)
+- [Q7: Why are contextual token embeddings sufficient?](#q7-why-are-contextual-token-embeddings-sufficient)
+- [Q8: Can MaxSim be replaced with other aggregation functions?](#q8-can-maxsim-be-replaced-with-other-aggregation-functions)
+- [Q9: How much storage overhead does Late Interaction introduce?](#q9-how-much-storage-overhead-does-late-interaction-introduce)
+- [Q10: What compression techniques are used?](#q10-what-compression-techniques-are-used)
+- [Q11: How does ColBERTv2 reduce storage?](#q11-how-does-colbertv2-reduce-storage)
 
-### [Module 9: Multi-Stage Retrieval](#module-9-multi-stage-retrieval)
-- Q1: Why do large systems use multiple ranking stages?
-- Q2: What should each stage optimize?
-- Q3: How many documents should each stage keep?
-- Q4: How should latency be allocated across stages?
-- Q5: Where should metadata filtering occur?
-- Q6: Where should duplicate removal occur?
-- Q7: Should reranking happen before or after chunk merging?
-- Q8: Should an LLM judge replace a Cross Encoder?
 
-### [Module 10: Evaluation Metrics](#module-10-evaluation-metrics)
-- Q1: Why is Recall@K used for retrievers?
-- Q2: Why is NDCG used for rerankers?
-- Q3: Why does MAP ignore graded relevance?
-- Q4: Why does MRR ignore every relevant document after the first?
-- Q5: Which metrics correlate best with final answer quality?
-- Q6: Should retrieval and reranking be evaluated independently?
-- Q7: How do offline metrics correlate with online user satisfaction?
-- Q8: Which metrics matter most for conversational RAG?
+**[Module 5: Training Data](#module-5-training-data)**
+- [Q1: What is a Positive Sample?](#q1-what-is-a-positive-sample)
+- [Q2: What is a Negative Sample?](#q2-what-is-a-negative-sample)
+- [Q3: What is a Hard Negative?](#q3-what-is-a-hard-negative)
+- [Q4: What is a False Negative?](#q4-what-is-a-false-negative)
+- [Q5: How do false negatives harm reranker training?](#q5-how-do-false-negatives-harm-reranker-training)
+- [Q6: How should positives and negatives be balanced?](#q6-how-should-positives-and-negatives-be-balanced)
+- [Q7: How many negatives should each query have?](#q7-how-many-negatives-should-each-query-have)
+- [Q8: Should negatives be sampled randomly or mined?](#q8-should-negatives-be-sampled-randomly-or-mined)
+- [Q9: How do you continuously refresh training data?](#q9-how-do-you-continuously-refresh-training-data)
+- [Q10: How do click logs become ranking labels?](#q10-how-do-click-logs-become-ranking-labels)
+- [Q11: How do you remove position bias from click data?](#q11-how-do-you-remove-position-bias-from-click-data)
 
-### [Module 11: Production Operations](#module-11-production-operations)
-- Q1: How should rerankers be deployed?
-- Q2: How do you batch Cross Encoder inference?
-- Q3: How many candidates should be reranked?
-- Q4: Should rerankers run on GPU or CPU?
-- Q5: How do you cache reranker results?
-- Q6: How do you monitor reranker drift?
-- Q7: How often should rerankers be retrained?
-- Q8: How do you version rerankers?
-- Q9: What telemetry should be collected?
 
-### [Module 12: Future Directions](#module-12-future-directions)
-- Q1: Can rerankers reason instead of score?
-- Q2: Should rerankers generate explanations?
-- Q3: Can retrieval and reranking be trained jointly?
-- Q4: Can LLMs replace traditional rerankers?
-- Q5: How can synthetic training data be trusted?
-- Q6: Can retrieval, reranking, and answer generation be optimized end-to-end?
-- Q7: How do retrieval-augmented agents change reranking?
-- Q8: Can reinforcement learning improve rerankers?
-- Q9: Can multimodal rerankers jointly rank text, images, and tables?
-- Q10: How should rerankers operate over structured knowledge graphs rather than documents?
+**[Module 6: Loss Functions](#module-6-loss-functions)**
+- [Q1: Why does Binary Cross Entropy optimize classification instead of ranking?](#q1-why-does-binary-cross-entropy-optimize-classification-instead-of-ranking)
+- [Q2: Why is Margin Ranking Loss effective?](#q2-why-is-margin-ranking-loss-effective)
+- [Q3: Why does RankNet use a probabilistic loss?](#q3-why-does-ranknet-use-a-probabilistic-loss)
+- [Q4: Why does LambdaRank optimize NDCG indirectly?](#q4-why-does-lambdarank-optimize-ndcg-indirectly)
+- [Q5: Why is NDCG difficult to optimize directly?](#q5-why-is-ndcg-difficult-to-optimize-directly)
+- [Q6: Why are gradients modified in LambdaRank?](#q6-why-are-gradients-modified-in-lambdarank)
+- [Q7: When should you use Pointwise, Pairwise, or Listwise?](#q7-when-should-you-use-pointwise-pairwise-or-listwise)
+- [Q8: How do different losses affect convergence?](#q8-how-do-different-losses-affect-convergence)
+- [Q9: Which losses are more robust to noisy labels?](#q9-which-losses-are-more-robust-to-noisy-labels)
+
+
+**[Module 7: Hard Negative Mining](#module-7-hard-negative-mining)**
+- [Q1: What makes a negative "hard"?](#q1-what-makes-a-negative-hard)
+- [Q2: Can a negative be too hard?](#q2-can-a-negative-be-too-hard)
+- [Q3: What are adversarial negatives?](#q3-what-are-adversarial-negatives)
+- [Q4: How do iterative hard-negative mining pipelines work?](#q4-how-do-iterative-hard-negative-mining-pipelines-work)
+- [Q5: Should retrievers and rerankers share the same hard negatives?](#q5-should-retrievers-and-rerankers-share-the-same-hard-negatives)
+- [Q6: Should hard negatives be refreshed every training epoch?](#q6-should-hard-negatives-be-refreshed-every-training-epoch)
+- [Q7: How many hard negatives should each positive have?](#q7-how-many-hard-negatives-should-each-positive-have)
+- [Q8: How do you avoid accidentally selecting false negatives?](#q8-how-do-you-avoid-accidentally-selecting-false-negatives)
+
+
+**[Module 8: Domain Adaptation](#module-8-domain-adaptation)**
+- [Q1: When is a generic reranker sufficient?](#q1-when-is-a-generic-reranker-sufficient)
+- [Q2: When should a reranker be fine-tuned?](#q2-when-should-a-reranker-be-fine-tuned)
+- [Q3: How much domain-specific data is needed?](#q3-how-much-domain-specific-data-is-needed)
+- [Q4: Can instruction tuning improve reranking?](#q4-can-instruction-tuning-improve-reranking)
+- [Q5: Should telecom terminology be added through continued pretraining or supervised fine-tuning?](#q5-should-telecom-terminology-be-added-through-continued-pretraining-or-supervised-fine-tuning)
+- [Q6: How does vocabulary mismatch affect ranking?](#q6-how-does-vocabulary-mismatch-affect-ranking)
+- [Q7: How do you evaluate whether domain adaptation was worthwhile?](#q7-how-do-you-evaluate-whether-domain-adaptation-was-worthwhile)
+
+
+**[Module 9: Multi-Stage Retrieval](#module-9-multi-stage-retrieval)**
+- [Q1: Why do large systems use multiple ranking stages?](#q1-why-do-large-systems-use-multiple-ranking-stages)
+- [Q2: What should each stage optimize?](#q2-what-should-each-stage-optimize)
+- [Q3: How many documents should each stage keep?](#q3-how-many-documents-should-each-stage-keep)
+- [Q4: How should latency be allocated across stages?](#q4-how-should-latency-be-allocated-across-stages)
+- [Q5: Where should metadata filtering occur?](#q5-where-should-metadata-filtering-occur)
+- [Q6: Where should duplicate removal occur?](#q6-where-should-duplicate-removal-occur)
+- [Q7: Should reranking happen before or after chunk merging?](#q7-should-reranking-happen-before-or-after-chunk-merging)
+- [Q8: Should an LLM judge replace a Cross Encoder?](#q8-should-an-llm-judge-replace-a-cross-encoder)
+
+
+**[Module 10: Evaluation Metrics](#module-10-evaluation-metrics)**
+- [Q1: Why is Recall@K used for retrievers?](#q1-why-is-recallk-used-for-retrievers)
+- [Q2: Why is NDCG used for rerankers?](#q2-why-is-ndcg-used-for-rerankers)
+- [Q3: Why does MAP ignore graded relevance?](#q3-why-does-map-ignore-graded-relevance)
+- [Q4: Why does MRR ignore every relevant document after the first?](#q4-why-does-mrr-ignore-every-relevant-document-after-the-first)
+- [Q5: Which metrics correlate best with final answer quality?](#q5-which-metrics-correlate-best-with-final-answer-quality)
+- [Q6: Should retrieval and reranking be evaluated independently?](#q6-should-retrieval-and-reranking-be-evaluated-independently)
+- [Q7: How do offline metrics correlate with online user satisfaction?](#q7-how-do-offline-metrics-correlate-with-online-user-satisfaction)
+- [Q8: Which metrics matter most for conversational RAG?](#q8-which-metrics-matter-most-for-conversational-rag)
+
+
+**[Module 11: Production Operations](#module-11-production-operations)**
+- [Q1: How should rerankers be deployed?](#q1-how-should-rerankers-be-deployed)
+- [Q2: How do you batch Cross Encoder inference?](#q2-how-do-you-batch-cross-encoder-inference)
+- [Q3: How many candidates should be reranked?](#q3-how-many-candidates-should-be-reranked)
+- [Q4: Should rerankers run on GPU or CPU?](#q4-should-rerankers-run-on-gpu-or-cpu)
+- [Q5: How do you cache reranker results?](#q5-how-do-you-cache-reranker-results)
+- [Q6: How do you monitor reranker drift?](#q6-how-do-you-monitor-reranker-drift)
+- [Q7: How often should rerankers be retrained?](#q7-how-often-should-rerankers-be-retrained)
+- [Q8: How do you version rerankers?](#q8-how-do-you-version-rerankers)
+- [Q9: What telemetry should be collected?](#q9-what-telemetry-should-be-collected)
+
+
+**[Module 12: Future Directions](#module-12-future-directions)**
+- [Q1: Can rerankers reason instead of score?](#q1-can-rerankers-reason-instead-of-score)
+- [Q2: Should rerankers generate explanations?](#q2-should-rerankers-generate-explanations)
+- [Q3: Can retrieval and reranking be trained jointly?](#q3-can-retrieval-and-reranking-be-trained-jointly)
+- [Q4: Can LLMs replace traditional rerankers?](#q4-can-llms-replace-traditional-rerankers)
+- [Q5: How can synthetic training data be trusted?](#q5-how-can-synthetic-training-data-be-trusted)
+- [Q6: Can retrieval, reranking, and answer generation be optimized end-to-end?](#q6-can-retrieval-reranking-and-answer-generation-be-optimized-end-to-end)
+- [Q7: How do retrieval-augmented agents change reranking?](#q7-how-do-retrieval-augmented-agents-change-reranking)
+- [Q8: Can reinforcement learning improve rerankers?](#q8-can-reinforcement-learning-improve-rerankers)
+- [Q9: Can multimodal rerankers jointly rank text, images, and tables?](#q9-can-multimodal-rerankers-jointly-rank-text-images-and-tables)
+- [Q10: How should rerankers operate over structured knowledge graphs rather than documents?](#q10-how-should-rerankers-operate-over-structured-knowledge-graphs-rather-than-documents)
 
 ---
 
@@ -1667,3 +1679,4 @@ Today's reranker asks: *"Which document is most relevant?"*
 Tomorrow's retrieval system will ask: *"Given my current knowledge, what evidence should I acquire next, how should I combine it with what I already know, and can I justify why this evidence is sufficient to solve the user's problem?"*
 
 That shift — from **ranking documents** to **planning, acquiring, validating, and reasoning over evidence** — is the defining research direction for the next generation of Retrieval-Augmented Generation systems.
+
