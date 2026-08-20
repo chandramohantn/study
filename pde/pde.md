@@ -16,13 +16,13 @@ This says:
 
 > the rate at which the coffee temperature changes depends on how different it is from room temperature.
 
-There is one independent variable, $t$, so we have an **ordinary differential equation**.
+There is one independent variable, t, so we have an **ordinary differential equation**.
 
 Now imagine instead that we're interested in the temperature of a metal rod.
 
 The temperature isn't a single number anymore.
 
-At every location $x$, there is potentially a different temperature $T(x,t)$. For example:
+At every location x, there is potentially a different temperature T(x,t). For example:
 
 ```text
 position x:
@@ -45,7 +45,7 @@ $$
 \frac{\partial T}{\partial t}
 $$
 
-and $\frac{\partial T}{\partial x}$ Hence: **partial differential equation**.
+and \frac{\partial T}{\partial x} Hence: **partial differential equation**.
 
 ---
 
@@ -53,25 +53,19 @@ and $\frac{\partial T}{\partial x}$ Hence: **partial differential equation**.
 
 This is probably the most important mental model.
 
-A PDE generally deals with a function such as $u(x,t)$ or, in 3D,
-
-$$
-u(x,y,z,t)
-$$
-
-Think of $u$ as a **field**.
+A PDE generally deals with a function such as u(x,t) or, in 3D, u(x,y,z,t) Think of u as a **field**.
 
 Examples:
 
-| Field $u$ | Meaning |
+| Field u | Meaning |
 | -------------------- | ---------------------- |
-| $T(x,y,z,t)$ | temperature |
-| $p(x,y,z,t)$ | pressure |
-| $\rho(x,y,z,t)$ | density |
-| $\mathbf{v}(x,y,z,t)$ | fluid velocity |
-| $E(x,y,z,t)$ | electromagnetic field |
-| $\psi(x,y,z,t)$ | quantum wavefunction |
-| $c(x,y,z,t)$ | chemical concentration |
+| T(x,y,z,t) | temperature |
+| p(x,y,z,t) | pressure |
+| \rho(x,y,z,t) | density |
+| \mathbf{v}(x,y,z,t) | fluid velocity |
+| E(x,y,z,t) | electromagnetic field |
+| \psi(x,y,z,t) | quantum wavefunction |
+| c(x,y,z,t) | chemical concentration |
 
 A PDE imposes a local relationship between the values and derivatives of this field.
 
@@ -85,13 +79,13 @@ $$
 
 ## 3. Why derivatives appear
 
-Consider temperature $T(x,t)$.
+Consider temperature T(x,t).
 
-The derivative $\frac{\partial T}{\partial x}$ asks:
+The derivative \frac{\partial T}{\partial x} asks:
 
 > If I move slightly in space, how quickly does temperature change?
 
-While $\frac{\partial T}{\partial t}$ asks:
+While \frac{\partial T}{\partial t} asks:
 
 > If I stay at the same location, how quickly does temperature change with time?
 
@@ -109,12 +103,12 @@ $$
 \frac{\partial T}{\partial x}=2x
 $$
 
-because when differentiating with respect to $x$, we temporarily treat $t$ as constant.
+because when differentiating with respect to x, we temporarily treat t as constant.
 
 Similarly,
 
 $$
-\frac{\partial T}{\partial t}=3.
+\frac{\partial T}{\partial t}=3
 $$
 
 The word **partial** simply reflects that the function depends on multiple variables, and we're differentiating with respect to one of them.
@@ -186,10 +180,7 @@ fluid motion
 The classic PDE is
 
 $$
-\frac{\partial T}{\partial t} =
-
-\alpha
-\frac{\partial^2 T}{\partial x^2}
+\frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2}
 $$
 
 This is the **heat equation**.
@@ -254,9 +245,8 @@ The discrete expression $T_{i-1}-2T_i+T_{i+1}$ measures this imbalance.
 For the hot point:
 
 $$
-20-2(80)+20=-120.
+20-2(80)+20=-120
 $$
-
 Negative means the center temperature should decrease.
 
 For a cold point surrounded by hot material:
@@ -265,29 +255,11 @@ For a cold point surrounded by hot material:
 80 20 80
 ```
 
-we get
+we get 80-2(20)+80=120. Positive means the center should heat up.
 
+As the spatial spacing becomes infinitesimally small, T_{i-1}-2T_i+T_{i+1} becomes proportional to \frac{\partial^2 T}{\partial x^2} Therefore
 $$
-80-2(20)+80=120.
-$$
-
-Positive means the center should heat up.
-
-As the spatial spacing becomes infinitesimally small, $T_{i-1}-2T_i+T_{i+1}$ becomes proportional to
-
-$$
-\frac{\partial^2 T}{\partial x^2}.
-$$
-
-Therefore
-
-$$
-\boxed{
-\frac{\partial T}{\partial t} =
-
-\alpha
-\frac{\partial^2 T}{\partial x^2}
-}
+\boxed{ \frac{\partial T}{\partial t} = \alpha \frac{\partial^2 T}{\partial x^2} }
 $$
 
 essentially says:
@@ -313,11 +285,8 @@ Each cell interacts with neighboring cells.
 You could write equations like
 
 $$
-\frac{du_i}{dt} =
-
-k(u_{i-1}-2u_i+u_{i+1}).
+\frac{du_i}{dt} = k(u_{i-1}-2u_i+u_{i+1})
 $$
-
 That's just a large system of ODEs.
 
 For 1,000 grid points, you get 1,000 coupled ODEs.
@@ -325,9 +294,7 @@ For 1,000 grid points, you get 1,000 coupled ODEs.
 As the grid spacing approaches zero:
 
 $$
-\text{coupled ODE system}
-\longrightarrow
-\text{PDE}.
+\text{coupled ODE system} \longrightarrow \text{PDE}
 $$
 
 So one conceptual interpretation is:
@@ -336,13 +303,7 @@ $$
 \boxed{\text{A PDE is an infinite-dimensional dynamical system.}}
 $$
 
-Instead of tracking $x_1(t),x_2(t),\dots,x_n(t),$ we track an entire function
-
-$$
-u(x,t).
-$$
-
-This perspective becomes particularly important in scientific machine learning and PhysicsNeMo.
+Instead of tracking $x_1(t),x_2(t),\dots,x_n(t),$ we track an entire function $u(x,t)$ This perspective becomes particularly important in scientific machine learning and PhysicsNeMo.
 
 ---
 
@@ -350,23 +311,17 @@ This perspective becomes particularly important in scientific machine learning a
 
 Consider a vibrating string.
 
-Its displacement is $u(x,t).$ The wave equation is
+Its displacement is $u(x,t)$ The wave equation is
 
 $$
-\frac{\partial^2u}{\partial t^2} =
-
-c^2
-\frac{\partial^2u}{\partial x^2}.
+\frac{\partial^2u}{\partial t^2} = c^2 \frac{\partial^2u}{\partial x^2}
 $$
 
 Interpretation:
 
 $$
-\text{acceleration} =
-
-c^2\times\text{spatial curvature}.
+\text{acceleration} = c^2\times\text{spatial curvature}
 $$
-
 Imagine pulling a string upward:
 
 ```text
@@ -399,10 +354,7 @@ $$
 A large fraction of physics can be expressed through:
 
 $$
-\text{rate of change}
-=== \text{inflow} - \text{outflow}
-+
-\text{sources}.
+\text{rate of change} === \text{inflow} - \text{outflow} + \text{sources}.
 $$
 
 Consider mass density (\rho(x,t)).
@@ -412,11 +364,7 @@ If more mass enters a tiny region than leaves it, density increases.
 Mathematically:
 
 $$
-\frac{\partial \rho}{\partial t}
-+
-\nabla\cdot(\rho\mathbf v) =
-
-0.
+\frac{\partial \rho}{\partial t} + \nabla\cdot(\rho\mathbf v) = 0.
 $$
 
 This is the **continuity equation**.
@@ -427,19 +375,12 @@ $$
 \boxed{\text{mass cannot disappear or magically appear.}}
 $$
 
-The divergence term $\nabla\cdot(\rho\mathbf v)$ measures net flow leaving a tiny volume.
+The divergence term \nabla\cdot(\rho\mathbf v) measures net flow leaving a tiny volume.
 
 Many PDEs come from similar conservation laws:
-
 $$
-\begin{aligned}
-\text{mass conservation} &\rightarrow \text{continuity equation}\
-\text{momentum conservation} &\rightarrow \text{Navier-Stokes}\
-\text{energy conservation} &\rightarrow \text{heat equations}\
-\text{charge conservation} &\rightarrow \text{electromagnetic equations}.
-\end{aligned}
+\begin{aligned} \text{mass conservation} &\rightarrow \text{continuity equation}\ \text{momentum conservation} &\rightarrow \text{Navier-Stokes}\ \text{energy conservation} &\rightarrow \text{heat equations}\ \text{charge conservation} &\rightarrow \text{electromagnetic equations}. \end{aligned}
 $$
-
 ---
 
 ## 10. A PDE alone usually isn't enough
@@ -447,18 +388,12 @@ $$
 Suppose we have the heat equation:
 
 $$
-T_t = \alpha T_{xx}.
+T_t = \alpha T_{xx}
 $$
 
 There are infinitely many solutions.
 
-For example,
-
-$$
-T(x,t)=20
-$$
-
-is one solution.
+For example, $T(x,t)=20$. is one solution.
 
 So is a complicated evolving temperature profile.
 
@@ -466,13 +401,7 @@ To determine the actual physical solution, we typically need two additional ingr
 
 ### Initial conditions
 
-What did the system look like initially?
-
-$$
-T(x,0)=f(x).
-$$
-
-Example:
+What did the system look like initially? $T(x,0)=f(x)$. Example:
 
 ```text
 t = 0
@@ -494,11 +423,8 @@ What happens at the edges?
 For example:
 
 $$
-T(0,t)=20,
-\qquad
-T(L,t)=20.
+T(0,t)=20, \qquad T(L,t)=20
 $$
-
 This could represent the ends of the rod being held at (20^\circ\text C).
 
 Together:
@@ -520,7 +446,7 @@ Three canonical categories appear repeatedly.
 Example:
 
 $$
-\nabla^2 u = 0.
+\nabla^2 u = 0
 $$
 
 Laplace equation.
@@ -542,12 +468,11 @@ There is often no time variable.
 Example:
 
 $$
-u_t = \alpha\nabla^2u.
+u_t = \alpha\nabla^2u
 $$
-
-Heat/diffusion equation.
-
-The dominant phenomenon is:
+$$
+Heat/diffusion equation. The dominant phenomenon is:
+$$
 
 $$
 \boxed{\text{smoothing / diffusion}}
@@ -562,7 +487,7 @@ Information spreads throughout the domain.
 Example:
 
 $$
-u_{tt}=c^2\nabla^2u.
+u_{tt}=c^2\nabla^2u
 $$
 
 Wave equation.
@@ -578,11 +503,7 @@ Disturbances move at finite speeds.
 So a useful mental map is:
 
 $$
-\begin{array}{ccc}
-\text{Elliptic} & \text{Parabolic} & \text{Hyperbolic}\
-\downarrow & \downarrow & \downarrow\
-\text{equilibrium} & \text{diffusion} & \text{waves}
-\end{array}
+\begin{array}{ccc} \text{Elliptic} & \text{Parabolic} & \text{Hyperbolic}\\ \downarrow & \downarrow & \downarrow\\ \text{equilibrium} & \text{diffusion} & \text{waves} \end{array}
 $$
 
 ---
@@ -596,13 +517,7 @@ Real systems become much harder.
 Consider fluid dynamics:
 
 $$
-\frac{\partial \mathbf u}{\partial t}
-+
-(\mathbf u\cdot\nabla)\mathbf u =
-
--\frac{1}{\rho}\nabla p
-+
-\nu\nabla^2\mathbf u.
+\frac{\partial \mathbf u}{\partial t} + (\mathbf u\cdot\nabla)\mathbf u = -\frac{1}{\rho}\nabla p + \nu\nabla^2\mathbf u.
 $$
 
 This is part of the Navier-Stokes equations.
@@ -624,7 +539,7 @@ $$
 \boxed{\text{continuous PDE}}
 $$
 
-using $\boxed{\text{discrete numerical computation}}.$ Methods include:
+using $\boxed{\text{discrete numerical computation}}$ Methods include:
 
 * finite differences,
 * finite volumes,
@@ -644,21 +559,16 @@ And increasingly:
 
 Since you work with ML, here's a useful connection.
 
-A traditional neural network learns something like $f_\theta(x)\rightarrow y.$ A physical system governed by a PDE is closer to learning an **operator**:
+A traditional neural network learns something like $f_\theta(x)\rightarrow y$ A physical system governed by a PDE is closer to learning an **operator**:
 
 $$
-\mathcal G:
-\text{input field}
-\rightarrow
-\text{output field}.
+\mathcal G: \text{input field} \rightarrow \text{output field}.
 $$
 
 For example:
 
 $$
-\text{initial temperature field}
-\longrightarrow
-\text{temperature field 10 seconds later}.
+\text{initial temperature field} \longrightarrow \text{temperature field 10 seconds later}
 $$
 
 So instead of
@@ -688,22 +598,7 @@ That is why neural operators such as FNOs become important in scientific ML.
 I would compress PDE intuition into this picture:
 
 $$
-\boxed{
-\begin{array}{c}
-\text{A physical quantity exists everywhere in space}\
-\downarrow\
-u(x,y,z,t)\
-\downarrow\
-\text{nearby locations interact}\
-\downarrow\
-\text{local physics determines how }u\text{ changes}\
-\downarrow\
-\text{derivatives encode these spatial and temporal changes}\
-\downarrow\
-\text{PDE}\
-\downarrow\
-\text{global physical behavior}
-\end{array}}
+\boxed{ \begin{array}{c} \text{A physical quantity exists everywhere in space}\\ \downarrow\\ u(x,y,z,t)\\ \downarrow\\ \text{nearby locations interact}\\ \downarrow\\ \text{local physics determines how }u\text{ changes}\\ \downarrow\\ \text{derivatives encode these spatial and temporal changes}\\ \downarrow\\ \text{PDE}\\ \downarrow\\ \text{global physical behavior} \end{array}}
 $$
 
 So PDEs are not really about complicated derivatives.
@@ -716,4 +611,4 @@ The derivatives are simply the mathematical language needed to describe those lo
 
 ---
 
-There is one conceptual step I'd recommend next because it unlocks most PDE intuition: **understanding what gradient, divergence, Laplacian, and spatial derivatives physically mean**. Once (\nabla u), (\nabla\cdot \mathbf u), and $\nabla^2 u$ become visually intuitive, equations like heat, wave, Poisson, advection-diffusion, and eventually Navier-Stokes stop looking like arbitrary collections of symbols. We can build those operators from first principles next.
+There is one conceptual step I'd recommend next because it unlocks most PDE intuition: **understanding what gradient, divergence, Laplacian, and spatial derivatives physically mean**. Once $\nabla u$, $\nabla\cdot \mathbf{u}$, and $\nabla^2 u$ become visually intuitive, equations like heat, wave, Poisson, advection-diffusion, and eventually Navier-Stokes stop looking like arbitrary collections of symbols. We can build those operators from first principles next.
